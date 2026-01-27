@@ -1,0 +1,15 @@
+Git에서 처음 커밋하기 전에 한 번만 실행하세요.
+(본인 이메일과 이름으로 바꿔서 입력)
+
+  git config --global user.email "본인이메일@example.com"
+  git config --global user.name "본인이름"
+
+그 다음 이 폴더에서:
+
+  git commit -m "feat: AI 뉴스 챗봇 초기 버전"
+  git branch -M main
+
+GitHub에 새 저장소를 만든 뒤:
+
+  git remote add origin https://github.com/사용자명/저장소명.git
+  git push -u origin main

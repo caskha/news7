@@ -1,0 +1,13 @@
+{
+  "name": "news-chatbot",
+  "version": "1.0.0",
+  "description": "AI 뉴스 챗봇",
+  "main": "index.html",
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel --prod"
+  },
+  "keywords": ["news", "chatbot", "ai", "gemini"],
+  "author": "",
+  "license": "MIT"
+}

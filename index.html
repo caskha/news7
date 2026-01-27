@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🤖 AI 뉴스 챗봇</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.8em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.95;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+            min-height: 700px;
+        }
+
+        .news-section {
+            padding: 30px;
+            border-right: 1px solid #e0e0e0;
+            overflow-y: auto;
+            max-height: 700px;
+        }
+
+        .chat-section {
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            background: #f8f9fa;
+        }
+
+        .search-container {
+            margin-bottom: 25px;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+        }
+
+        .search-box input {
+            flex: 1;
+            padding: 16px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .search-box button {
+            padding: 16px 35px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .search-box button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .search-box button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .news-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .news-item {
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-left: 4px solid #667eea;
+        }
+
+        .news-item:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+
+        .news-item.selected {
+            background: #e7f3ff;
+            border-left-color: #2196F3;
+            box-shadow: 0 3px 10px rgba(33, 150, 243, 0.2);
+        }
+
+        .news-item h3 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.15em;
+            line-height: 1.4;
+        }
+
+        .news-item p {
+            color: #666;
+            font-size: 0.95em;
+            line-height: 1.6;
+        }
+
+        .news-item .source {
+            color: #999;
+            font-size: 0.85em;
+            margin-top: 10px;
+            font-weight: 500;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 25px;
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            min-height: 500px;
+            max-height: 550px;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 12px;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            flex-direction: row-reverse;
+        }
+
+        .message-content {
+            max-width: 75%;
+            padding: 16px 20px;
+            border-radius: 12px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .message.user .message-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.assistant .message-content {
+            background: #f0f0f0;
+            color: #333;
+            border-bottom-left-radius: 4px;
+        }
+
+        .chat-input-container {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input-container input {
+            flex: 1;
+            padding: 16px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .chat-input-container input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .chat-input-container button {
+            padding: 16px 35px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .chat-input-container button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .chat-input-container button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 30px;
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 18px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            border-left: 4px solid #c62828;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 30px;
+            color: #999;
+        }
+
+        .empty-state h3 {
+            font-size: 1.3em;
+            margin-bottom: 10px;
+            color: #666;
+        }
+
+        .empty-state p {
+            font-size: 1em;
+            color: #999;
+        }
+
+        @media (max-width: 968px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .news-section {
+                border-right: none;
+                border-bottom: 1px solid #e0e0e0;
+                max-height: 400px;
+            }
+
+            .message-content {
+                max-width: 85%;
+            }
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 AI 뉴스 챗봇</h1>
+            <p>키워드로 뉴스를 검색하고, AI와 대화해보세요</p>
+        </div>
+
+        <div class="main-content">
+            <div class="news-section">
+                <div class="search-container">
+                    <div class="search-box">
+                        <input 
+                            type="text" 
+                            id="searchInput" 
+                            placeholder="검색 키워드를 입력하세요 (예: 인공지능, 주식시장, 기후변화)"
+                            autocomplete="off"
+                        />
+                        <button id="searchBtn">검색</button>
+                    </div>
+                </div>
+
+                <div id="newsContainer">
+                    <div class="empty-state">
+                        <h3>📰 키워드를 검색하여 뉴스를 찾아보세요</h3>
+                        <p>AI가 관련 뉴스 10개를 생성합니다</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chat-section">
+                <div class="chat-messages" id="chatMessages">
+                    <div class="empty-state">
+                        <h3>💬 뉴스에 대해 질문해보세요</h3>
+                        <p>AI가 뉴스 내용을 기반으로 답변합니다</p>
+                    </div>
+                </div>
+
+                <div class="chat-input-container">
+                    <input 
+                        type="text" 
+                        id="chatInput" 
+                        placeholder="뉴스에 대해 질문하세요..."
+                        autocomplete="off"
+                    />
+                    <button id="sendBtn">전송</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let newsData = [];
+        let selectedNews = null;
+
+        const searchInput = document.getElementById('searchInput');
+        const searchBtn = document.getElementById('searchBtn');
+        const newsContainer = document.getElementById('newsContainer');
+        const chatMessages = document.getElementById('chatMessages');
+        const chatInput = document.getElementById('chatInput');
+        const sendBtn = document.getElementById('sendBtn');
+
+        // 엔터키 이벤트
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !searchBtn.disabled) searchNews();
+        });
+
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !sendBtn.disabled) sendMessage();
+        });
+
+        searchBtn.addEventListener('click', searchNews);
+        sendBtn.addEventListener('click', sendMessage);
+
+        // Gemini API 호출
+        async function callGeminiAPI(prompt) {
+            const response = await fetch('/api/gemini', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ prompt })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'API 요청 실패');
+            }
+
+            const data = await response.json();
+            return data.text;
+        }
+
+        // 뉴스 검색
+        async function searchNews() {
+            const keyword = searchInput.value.trim();
+            if (!keyword) {
+                alert('키워드를 입력해주세요');
+                return;
+            }
+
+            searchBtn.disabled = true;
+            searchBtn.innerHTML = '<span class="spinner"></span>';
+            newsContainer.innerHTML = '<div class="loading">🔍 뉴스를 검색하고 있습니다...</div>';
+
+            try {
+                const prompt = `"${keyword}"에 대한 최신 뉴스 10개를 생성해주세요.
+
+실제 뉴스처럼 구체적이고 현실적으로 작성하되, 반드시 다음 JSON 형식으로만 응답해주세요:
+
+[
+  {
+    "title": "뉴스 제목",
+    "summary": "뉴스 요약 (2-3문장)",
+    "source": "언론사명",
+    "date": "2026-01-27"
+  }
+]
+
+주의사항:
+- 설명 없이 JSON 배열만 출력하세요
+- 정확히 10개의 뉴스를 생성하세요
+- 한국어로 작성하세요`;
+
+                const response = await callGeminiAPI(prompt);
+                
+                const jsonMatch = response.match(/\[\s*\{[\s\S]*\}\s*\]/);
+                if (jsonMatch) {
+                    newsData = JSON.parse(jsonMatch[0]);
+                    if (newsData.length > 0) {
+                        displayNews(newsData);
+                        selectNews(0);
+                    } else {
+                        throw new Error('뉴스 데이터가 없습니다');
+                    }
+                } else {
+                    throw new Error('뉴스 데이터 파싱 실패');
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                newsContainer.innerHTML = `<div class="error">❌ ${error.message}</div>`;
+            } finally {
+                searchBtn.disabled = false;
+                searchBtn.textContent = '검색';
+            }
+        }
+
+        // 뉴스 표시
+        function displayNews(news) {
+            newsContainer.innerHTML = '<div class="news-list" id="newsList"></div>';
+            const newsList = document.getElementById('newsList');
+
+            news.forEach((item, index) => {
+                const newsItem = document.createElement('div');
+                newsItem.className = 'news-item';
+                newsItem.innerHTML = `
+                    <h3>${item.title}</h3>
+                    <p>${item.summary}</p>
+                    <div class="source">${item.source} · ${item.date}</div>
+                `;
+                newsItem.addEventListener('click', () => selectNews(index));
+                newsList.appendChild(newsItem);
+            });
+        }
+
+        // 뉴스 선택
+        function selectNews(index) {
+            selectedNews = newsData[index];
+            
+            document.querySelectorAll('.news-item').forEach((item, i) => {
+                item.classList.toggle('selected', i === index);
+            });
+
+            chatMessages.innerHTML = `
+                <div class="message assistant">
+                    <div class="message-content"><strong>📰 ${selectedNews.title}</strong>
+
+${selectedNews.summary}
+
+이 뉴스에 대해 궁금한 점을 질문해주세요!</div>
+                </div>
+            `;
+        }
+
+        // 메시지 전송
+        async function sendMessage() {
+            const message = chatInput.value.trim();
+            if (!message) return;
+
+            if (!selectedNews) {
+                alert('먼저 뉴스를 선택해주세요');
+                return;
+            }
+
+            addMessage(message, 'user');
+            chatInput.value = '';
+            sendBtn.disabled = true;
+
+            const loadingId = 'loading-' + Date.now();
+            addMessage('💭 답변을 생성하고 있습니다...', 'assistant', loadingId);
+
+            try {
+                const prompt = `다음 뉴스 정보를 바탕으로 사용자의 질문에 답변해주세요:
+
+제목: ${selectedNews.title}
+요약: ${selectedNews.summary}
+출처: ${selectedNews.source}
+날짜: ${selectedNews.date}
+
+사용자 질문: ${message}
+
+답변 규칙:
+- 뉴스 내용을 기반으로 정확하게 답변하세요
+- 뉴스에 없는 내용은 추측하지 말고 모른다고 답변하세요
+- 친절하고 자연스러운 한국어로 답변하세요
+- 2-4문장으로 간결하게 답변하세요`;
+
+                const response = await callGeminiAPI(prompt);
+                
+                const loadingMsg = document.getElementById(loadingId);
+                if (loadingMsg) loadingMsg.remove();
+                
+                addMessage(response, 'assistant');
+
+            } catch (error) {
+                console.error('Error:', error);
+                const loadingMsg = document.getElementById(loadingId);
+                if (loadingMsg) loadingMsg.remove();
+                addMessage('❌ 죄송합니다. 응답 중 오류가 발생했습니다.', 'assistant');
+            } finally {
+                sendBtn.disabled = false;
+            }
+        }
+
+        // 메시지 추가
+        function addMessage(text, sender, id = null) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            if (id) messageDiv.id = id;
+            messageDiv.innerHTML = `<div class="message-content">${text}</div>`;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+    </script>
+</body>
+</html>
